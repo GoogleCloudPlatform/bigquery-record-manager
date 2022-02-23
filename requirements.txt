@@ -1,0 +1,6 @@
+python-dateutil
+google-cloud-firestore
+google-cloud-bigquery
+google-cloud-dataproc
+Flask
+networkx

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+  <head>
+    <title>BigQuery Record Manager</title>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+  </head>
+  <div class="pagetitle">
+  <h1>BigQuery Record Manager</h1>
+  </div>
+  <div class="header">
+  <h2>Create Table Groupings</h2>
+   <span style="color:#9d9a9a;">
+	   <h6>Policies that reference a set of connected tables must first assign those tables to one or more groups.<br><br>
+		   
+		   A table grouping is simply a descriptive label for one or more tables which are somehow related. For example, you might classify tables that contain country names, region codes, and currencies as "Reference" tables, while tables containing sales records, returns, and receipts, may be classified as "Transaction" tables. It's up to you to choose your classification scheme. <br><br>
+		   
+		   To proceed, enter a group name next to each table you wish to classify. You can choose to group only a subset of your tables. Keep in mind that a table may be assigned to at most one group. <br><br>
+
+	   </h6>
+  </span>
+  </div>  
+    <body>
+    {% if saved == 1 %}
+		<table><tr><td>
+		&nbsp;<span style="color:green;">Groups Saved!</span>
+		</td></tr></table><p>
+    {% endif %}
+	 <form method="post" action="/process_groupings">
+	  <table>
+	
+	           {% for tuple in table_group_list: %}
+			   {% set table = tuple.0 %}
+			   {% set group = tuple.1 %}
+		        <tr>
+		          <td style="text-align:left">&nbsp;&nbsp;
+					<a href="https://console.cloud.google.com/bigquery?project={{ project }}&d={{ dataset }}&p={{ project }}&t={{ table }}&page=table">{{ table }}</a>&nbsp;&nbsp;
+				</td>
+				<td>
+					{% if not group %}
+						<input type="text" name="{{ table }}" style="width: 100px;padding: 3px;">
+					{% else %}
+						<input type="text" name="{{ table }}" value="{{ group }}" style="width: 100px;padding: 3px;">
+					{% endif %}
+				</td>
+			  </tr>
+			{% endfor %}
+		 
+		</table>
+			<p>
+ 		        <table>
+ 		        <tr>
+ 			   <td><input type="submit" value="Submit Changes" name="action">
+ 			       <input type="submit" value="Cancel Changes" name="action">
+ 			   </td>
+ 		        </tr>
+		       </table>  
+          </form>
+    </body>
+</html>

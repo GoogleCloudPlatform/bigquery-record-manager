@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+  <head>
+    <title>BigQuery Record Manager</title>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+  </head>  
+    <body>
+	    {% if saved == 1 %}
+	    <table><tr><td>
+	    &nbsp;<span style="color:green;">Settings Saved!</span>
+         </td></tr></table><p>
+	    {% endif %}
+	    
+	   <div class="pagetitle">
+	   <h1>BigQuery Record Manager</h1>
+        </div>
+	   <div class="header">
+	   <h2>BQ Settings</h2>
+	   <span style="color:#9d9a9a;">
+		   <h6>To initialize the Record Manager, enter the BQ project and datasets you want to manage. Note that the BQ project and datasets must already exist. 
+		    <br><br>Mandatory fields are marked by <span style="color:red;">*</span>
+		   </h6>
+	  </span>
+	   </div>
+         <form method="post" action="/process_bq_settings">
+		    <table>
+		        <tr>
+		          <td><span style="color:red;">*</span>&nbsp;BQ Project ID:&nbsp;</td>
+				<td>
+				<input type="text" name="project" value="{{ project }}" style="width: 100px;padding: 3px;">
+				</td>
+			   </tr>			    
+			
+  		        <tr>
+  		          <td><span style="color:red;">*</span>&nbsp;BQ dataset for <i>native</i> tables:&nbsp;</td>
+  				<td>
+  				<input type="text" name="native_dataset" value="{{ native_dataset }}" style="width: 150px;padding: 3px;">
+  				</td>
+  			   </tr>
+  		        <tr>
+  		          <td><span style="color:red;">*</span>&nbsp;BQ dataset for <i>tombstone</i> records:&nbsp;</td>
+  				<td>
+  				<input type="text" name="tombstone_dataset" value="{{ tombstone_dataset }}" style="width: 150px;padding: 3px;">
+  				</td>
+  			   </tr>
+			   </table>
+			   
+			   <span style="color:#9d9a9a;">
+				   <h6>The following fields are only required for data archiving policies. <br>The temp dataset is used only during the migration to GCS storage while the external dataset is used for creating the external tables from parquet files. 
+				   </h6>
+			   </span>
+			    <table>
+  		        <tr>
+  		          <td>&nbsp;&nbsp;BQ dataset for <i>temp</i> tables:</td>
+  				<td>
+  				<input type="text" name="temp_dataset" value="{{ temp_dataset }}" style="width: 150px;padding: 3px;">
+  				</td>
+  			   </tr>
+  		        <tr>
+  		          <td>&nbsp;&nbsp;BQ dataset for <i>external</i> tables:&nbsp;</td>
+  				<td>
+  				<input type="text" name="external_dataset" value="{{ external_dataset }}" style="width: 150px;padding: 3px;">
+  				</td>
+  			   </tr>
+		   </table>
+   
+	         <p>&nbsp;</p>
+		        <table>
+		        <tr>
+			   <td><input type="submit" value="Submit Changes" name="action">
+			       <input type="submit" value="Cancel Changes" name="action">
+			   </td>
+		        </tr>
+			   </table>
+         </form>
+	    <p>&nbsp;&nbsp;<a href="/">Homepage</a></p>
+    </body>
+</html>

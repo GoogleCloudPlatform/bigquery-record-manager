@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style type="text/css">
+<!--
+ .indent { margin-left: 100px; }
+-->
+</style>
+  <head>
+    <title>BigQuery Record Manager</title>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+  </head>  
+    <body>
+	   <div class="indent">
+	   <div class="pagetitle">
+	   <h1>&nbsp;BigQuery Record Manager</h1>
+        </div>
+
+	    <h2>&nbsp;&nbsp;Init Parameters</h2>
+    	&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ url_for('bq_settings', saved=0) }}">BQ Settings</a><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ url_for('gcs_settings', saved=0) }}">GCS Settings</a><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ url_for('dataproc_settings', saved=0) }}">Dataproc Settings</a><br>
+		<p>&nbsp;</p>
+	    <h2>&nbsp;&nbsp;Table Relationships</h2>
+    		&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ url_for('create_associations', saved=0) }}">Create Table Associations</a><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ url_for('create_groupings', saved=0) }}">Create Table Groupings</a><br>
+	    <p>&nbsp;</p>
+	    <h2>&nbsp;&nbsp;Manage Policies</h2>
+   		&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ url_for('view_scheduled_policies') }}">Create/Edit Scheduled Policies</a><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ url_for('view_ondemand_policies') }}">Create/Edit On-Demand Policies</a><br>
+   	    <p>&nbsp;</p>
+	    <h2>&nbsp;&nbsp;Alpha Features (aka Danger Zone)</h2>
+		&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ url_for('visualize_associations') }}">Visualize Table Associations</a><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ url_for('policy_execution_history') }}">Policy Execution History</a><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;<a href="{{ url_for('policy_compliance') }}">Policy Compliance</a><br>
+	   </div>
+    </body>
+</html>
+
+
+	    	
+
+	    
+	   	

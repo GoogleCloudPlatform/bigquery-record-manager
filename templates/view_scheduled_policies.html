@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+  <head>
+    <title>BigQuery Record Manager</title>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+  </head>  
+    <body>
+	    {% if status == -1 %}
+	    <table><tr><td>
+	    &nbsp;<span style="color:red;">Errors occurred while processing your policy submission. </span>
+         </td></tr></table><p>
+	    {% endif %}
+	    
+ 	   <div class="pagetitle">
+ 	   <h1>BigQuery Record Manager</h1>
+         </div>
+ 	   <div class="header">
+	    <h2>Scheduled Policies</h2>
+	   </div>
+	    <span style="color:#9d9a9a;">
+	    <h6>
+		   {% if policies|length > 0 %} 
+		   	&nbsp;Current scheduled policies are listed below. 
+			If you want to update a policy, click on the Edit Policy button above the policy entry. <br><br>
+			&nbsp;If you want to create a new scheduled policy, go to <a href="/create_scheduled_policy">Create Scheduled Policy</a>. <br><br>
+			&nbsp;Mandatory policy fields are marked by <span style="color:red;">*</span>. 
+		   {% else %}
+		     &nbsp;&nbsp;<span style="color:red;">Record Manager has no scheduled policies.</span> 
+		   {% endif %}
+	    </h6>
+         </span>  
+		    {% for policy in policies %}
+		    <table style="background-color:#f1eeee" width="1000">
+		    <form method="post" action="/update_scheduled_policy">
+		    <th>&nbsp;<input type="submit" value="Edit Policy" name="submit"></th> 
+	          <tr>
+		     <td>&nbsp;<span style="color:red;">*</span>
+				Policy Id: <span style="color:#0b5394;">{{ policy['policy_id'] }}</span> 
+			</td>
+		     </tr>
+	          <tr>
+		     <td>&nbsp;<span style="color:red;">*</span>
+				Date Created: <span style="color:#0b5394;">{{ policy['date_created'].strftime('%Y-%m-%dT%H:%M:%S') }}</span> 
+			</td>
+		     </tr>
+	          <tr>
+		     <td>&nbsp;<span style="color:red;">*</span>
+				Policy Action: <span style="color:green;">{{ policy['policy_action'] }}</span> 
+			</td>
+		     </tr>
+	          <tr>
+		     <td>&nbsp;<span style="color:red;">*</span>
+				Storage System: <span style="color:green;">{{ policy['storage_system'] }}</span> 
+			</td>
+		     </tr>
+	          <tr>
+		     <td>&nbsp;<span style="color:red;">*</span>
+				Entity Name: <span style="color:#0b5394;">{{ policy['entity_name'] }}</span> 
+			</td>
+		     </tr>
+	          <tr>
+		     <td>&nbsp;<span style="color:red;">*</span>
+				Entity Path: <span style="color:#0b5394;">{{ policy['entity_path'] }}</span> 
+			</td>
+		     </tr>
+	          <tr>
+		     <td>&nbsp;<span style="color:red;">*</span>
+				Grouping: <span style="color:#0b5394;">{{ policy['grouping'] }}</span> 
+			</td>
+		     </tr>
+	          <tr>
+		     <td>&nbsp;&nbsp;
+				Entity Groups: 
+				{% if policy['grouping'] == True %}
+					<span style="color:#0b5394;">{{ policy['entity_groups'] }}</span> 
+				{% else %}
+					<span style="color:#0b5394;">N/A</span> 
+				{% endif %}
+			</td>
+		     </tr>
+	          <tr>
+		     <td>&nbsp;<span style="color:red;">*</span>
+				Timestamp Column: <span style="color:#0b5394;">{{ policy['ts_column'] }}</span> 
+			</td>
+		     </tr>
+	          <tr>
+		     <td>&nbsp;&nbsp;
+				SQL Filter Expression: 
+				
+				{% if policy['sql_filter_exp'] != "" %}
+					<span style="color:#0b5394;">{{ policy['sql_filter_exp'] }}</span> 
+				{% else %}
+					<span style="color:#0b5394;">N/A</span>
+				{% endif %} 
+			</td>
+		     </tr>
+	          <tr>
+		     <td>&nbsp;<span style="color:red;">*</span>
+				Retention Period: <span style="color:#0b5394;">{{ policy['retention_period'] }}</span> 
+			</td>
+		     </tr>
+	          <tr>
+		     <td>&nbsp;<span style="color:red;">*</span>
+				Retention Unit: <span style="color:#0b5394;">{{ policy['retention_unit'] }}</span> 
+			</td>
+		     </tr>
+		       <input type="hidden" name="policy_id" value="{{ policy['policy_id'] }}">
+			  <input type="hidden" name="policy_id" value="{{ policy['date_created'] }}">
+			  <input type="hidden" name="policy_action" value="{{ policy['policy_action'] }}">
+			  <input type="hidden" name="storage_system" value="{{ policy['storage_system'] }}">
+			  <input type="hidden" name="entity_name" value="{{ policy['entity_name'] }}">
+			  <input type="hidden" name="entity_path" value="{{ policy['entity_path'] }}">
+			  <input type="hidden" name="grouping" value="{{ policy['grouping'] }}">
+			  <input type="hidden" name="entity_groups" value="{{ policy['entity_groups'] }}">
+			  <input type="hidden" name="ts_column" value="{{ policy['ts_column'] }}">
+			  <input type="hidden" name="sql_filter_exp" value="{{ policy['sql_filter_exp'] }}">
+			  <input type="hidden" name="retention_period" value="{{ policy['retention_period'] }}">
+			  <input type="hidden" name="retention_unit" value="{{ policy['retention_unit'] }}">
+		    </form>
+		    </table>
+		    <br>
+			{% endfor %}
+		          
+    <p>&nbsp;&nbsp;<a href="/create_scheduled_policy">Create Scheduled Policy</a>&nbsp;&nbsp;<a href="/">Main Menu</a></p>
+    </body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+  <head>
+    <title>Lakehouse Lifecycle Manager</title>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+  </head>  
+    <body>
+	    {% if saved == 1 %}
+	    <table><tr><td>
+	    &nbsp;<span style="color:green;">Settings Saved!</span>
+         </td></tr></table><p>
+	    {% endif %}
+	    
+	   <div class="pagetitle">
+	   <h1>Lakehouse Lifecycle Manager</h1>
+        </div>
+	   <div class="header">
+	   <h2>Dataproc Settings</h2>
+	   <span style="color:#9d9a9a;">
+		   <h6>Deletion policies on archived records require a running Dataproc cluster. If you plan to create such a deletion policy, fill out the details below. You must also copy the provided delete script, run_delta_deletes.py, to a GCS location and ensure that the file is readable by the App Engine service account. 
+		    <br><br>Mandatory fields are marked by <span style="color:red;">*</span>
+		   </h6>
+	  </span>
+	   </div>
+         <form method="post" action="/process_dataproc_settings">
+		    <table>
+		        <tr>
+		          <td><span style="color:red;">*</span>&nbsp;Dataproc Project ID:&nbsp;</td>
+				<td>
+				<input type="text" name="project" value="{{ project }}" style="width: 100px;padding: 3px;">
+				</td>
+			   </tr>
+		        <tr>
+		          <td><span style="color:red;">*</span>&nbsp;Dataproc Region:&nbsp;</td>
+				<td>
+				<input type="text" name="region" value="{{ region }}" style="width: 100px;padding: 3px;">
+				</td>
+			   </tr>
+		        <tr>
+		          <td><span style="color:red;">*</span>&nbsp;Dataproc Cluster:&nbsp;</td>
+				<td>
+				<input type="text" name="cluster" value="{{ cluster }}" style="width: 100px;padding: 3px;">
+				</td>
+			   </tr>
+		        <tr>
+		          <td><span style="color:red;">*</span>&nbsp;Delete Script Path:&nbsp;</td>
+				<td>
+				{% if delete_script %}
+					<input type="text" name="delete_script" value="{{ delete_script }}" style="width: 300px;padding: 3px;">
+				{% else %}
+					<input type="text" name="delete_script" value="gs://" style="width: 300px;padding: 3px;">
+				{% endif %}
+				</td>
+			   </tr>
+		    </table>
+   
+	         <p>&nbsp;</p>
+		        <table>
+		        <tr>
+			   <td><input type="submit" value="Submit Changes" name="action">
+			       <input type="submit" value="Cancel Changes" name="action">
+			   </td>
+		        </tr>
+			   </table>
+			   
+         </form>
+    </body>
+</html>
