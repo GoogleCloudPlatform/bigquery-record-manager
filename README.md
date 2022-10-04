@@ -13,7 +13,7 @@ The tool comes with a basic UI which is used for creating and managing policies.
 
 ###### Step 1: (Required) Clone this repo:
 ```
-git clone https://github.com/GoogleCloudPlatform/record-manager.git
+git clone https://github.com/GoogleCloudPlatform/bigquery-record-manager.git
 ```
 
 ###### Step 2: (Required) Deploy the Record Manager UI:
