@@ -13,12 +13,13 @@ The tool comes with a basic UI which is used for creating and managing policies.
 
 ###### Step 1: (Required) Clone this repo:
 ```
-git clone https://github.com/GoogleCloudPlatform/record-manager.git
+git clone https://github.com/GoogleCloudPlatform/bigquery-record-manager.git
 ```
 
 ###### Step 2: (Required) Deploy the Record Manager UI:
 ```
 gcloud services enable appengine.googleapis.com
+cd record-manager
 gcloud app deploy
 gcloud app browse
 ```
@@ -27,7 +28,6 @@ gcloud app browse
 ###### Firestore indexes must be created prior to running the UI. Creating the indexes can take a few minutes. 
 1. Run the create_indexes.py script as follows:
 ```
-cd record-manager
 python create_indexes.py $PROJECT_ID
 ```
 2. Go to the Firestore UI and click on the indexes tab. Make sure that all 3 indexes have been created before proceeding. You will see a green checkbox next to the index once it's ready.  
