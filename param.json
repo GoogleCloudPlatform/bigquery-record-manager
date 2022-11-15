@@ -1,0 +1,19 @@
+{
+	"template_id": "data_retention", 
+	"template_project": "tag-engine-develop", 
+	"template_region": "us-central1", 
+	"retention_period_field": "retention_period",
+	"expiration_action_field": "expiration_action",
+	"projects_in_scope": ["tag-engine-develop", "data-mesh-343422"],
+	"bigquery_region": "us-central1",
+	"snapshot_project": "tag-engine-develop",
+	"snapshot_dataset": "snapshots",
+	"snapshot_retention_period": 30,
+	"archives_bucket": "archived_assets",
+	"export_format": "parquet",
+	"archives_project": "tag-engine-develop",
+	"archives_dataset": "archives",
+	"remote_connection": "projects/tag-engine-develop/locations/us-central1/connections/gcs_connection",
+	"tag_engine_endpoint": "https://tag-engine-develop.uc.r.appspot.com",
+	"mode": "apply"
+}
