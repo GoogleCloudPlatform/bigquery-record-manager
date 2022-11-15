@@ -5,6 +5,8 @@ The purging procedure includes setting the expiration date on a table and creati
 
 The archival procedure includes creating an external table for each BigQuery table that has passed its retention period. The external table is stored on Cloud Storage in parquet format and upgraded to Biglake. This allows the external table to have the same column-level access as the source table. Record Manager uses Tag Engine to copy the metadata tags and policy tags from the source table to the external table. The source table is dropped once it has been archived. 
 
+You run Record Manager in either `validate` or `apply` mode. Validate lets you see what actions Record Manager would take whereas apply performs the actions. Since those actions are potentially destructive, you should run the service in validate mode before switching to apply mode. You specify the mode in the `param.json` file discussed below. 
+
 #### Dependencies 
 
 Record Manager uses Tag Engine to propagate the metadata tags and policy tags to Biglake tables. You can deploy Tag Engine by following [its deployment procedure](https://github.com/GoogleCloudPlatform/datacatalog-tag-engine/blob/main/README.md). 
@@ -13,7 +15,8 @@ Note: You can also use Tag Engine to populate the data retention tags that are n
 
 Tag Engine can be deployed into the same project as Record Manager or into a different project. For proof-of-concepts, it is often simpler to deploy them together into the same project. 
 
-#### update Google Cloud SDK
+
+#### Step 0: update Google Cloud SDK
 gcloud components update
 
 
@@ -49,6 +52,7 @@ gcloud builds submit --tag gcr.io/$PROJECT/record-manager
 Create the parameter file to Record Manager based on [this example](https://github.com/GoogleCloudPlatform/bigquery-record-manager/blob/main/param.json). 
 Once you have created the file, upload it to a Cloud Storage bucket. Copy the full path to this file, as you will need it in the next step. 
 
+As mentioned previously, you run Record Manager in either `validate` or `apply` mode. The mode is set in the parameter file. 
 
 #### Step 6: Create the Cloud Run job
 ```
