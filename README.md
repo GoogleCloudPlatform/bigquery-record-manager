@@ -1,11 +1,11 @@
 ### Record Manager
-This repository contains the Record Manager service for BigQuery, an open-source extension that automates the purging and archiving of BigQuery tables. The service takes as input a set of BigQuery tables that are tagged with a data retention policy. Record Manager reads the tags from Data Catalog and executes the policies on the tagged tables. 
+This repository contains the Record Manager service for BigQuery, an open-source extension that automates the purging and archiving of BigQuery tables. The service takes as input a set of BigQuery tables that are tagged with a data retention policy. Record Manager reads the tags from Data Catalog and executes the policies specified in the tags. 
 
 The purging procedure includes setting the expiration date on a table and creating a snapshot table. During the soft-deletion period, the table can be recovered from the snapshot table. After the soft-deletion period has passed, the snapshot table is also deleted and the source table can no longer be recovered. 
 
 The archival procedure includes creating an external table for each BigQuery table that has passed its retention period. The external table is stored on Cloud Storage in parquet format and upgraded to Biglake. This allows the external table to have the same column-level access as the source table. Record Manager uses Tag Engine to copy the metadata tags and policy tags from the source table to the external table. The source table is dropped once it has been archived. 
 
-You run Record Manager in either `validate` or `apply` mode. Validate lets you see what actions Record Manager would take whereas apply performs the actions. Since those actions are potentially destructive, you should run the service in validate mode before switching to apply mode. You specify the mode in the `param.json` file discussed below. 
+You run Record Manager in either `validate` or `apply` mode. The `validate` mode lets you see what actions Record Manager would take without actually performing those actions, whereas `apply` actually performs the purging and archiving actions. Since those actions are destructive, you should run the service in `validate` mode before switching to `apply` mode. You specify the mode in the `param.json` file discussed below. 
 
 #### Dependencies 
 
@@ -17,8 +17,9 @@ Tag Engine can be deployed into the same project as Record Manager or into a dif
 
 
 #### Step 0: update Google Cloud SDK
+```
 gcloud components update
-
+```
 
 #### Step 1: Set the required environment variables
 ```
@@ -84,6 +85,6 @@ gcloud beta run jobs execute record-manager-job --wait
 ### Troubleshooting:
 
 * Go to the Cloud Run console and click on your job to view the logs. 
-* If you encounter the error `ERROR: (gcloud.beta.run.jobs.create) User X does not have permission to access namespaces instance Y (or it may not exist): Permission 'iam.serviceaccounts.actAs' denied on service account Z (or it may not exist) when creating the Cloud Run job, please consult [this page](https://cloud.google.com/iam/docs/service-accounts-actas).
-* If you encounter the error `terminated: Application failed to start: invalid status ::14: could not start container: no such file or directory` when running the Cloud Run job, you may have hit a bug in Cloud Run. You'll need to work-around it by creating the job without the args and hard-coding the path to your parameter file in the main of [Service.py](https://github.com/GoogleCloudPlatform/bigquery-record-manager/blob/main/Service.py). 
+* If you encounter the error `ERROR: (gcloud.beta.run.jobs.create) User X does not have permission to access namespaces instance Y (or it may not exist): Permission 'iam.serviceaccounts.actAs' denied on service account Z (or it may not exist)` when creating the Cloud Run job, please consult [this page](https://cloud.google.com/iam/docs/service-accounts-actas).
+* If you encounter the error `terminated: Application failed to start: invalid status ::14: could not start container: no such file or directory` when running the Cloud Run job, you may have hit a bug. Note that Cloud Run Jobs is currently in previate preview. You can work-around this bug by creating the job without the `args` parameter and hard-coding the path to your parameter file in the main of [Service.py](https://github.com/GoogleCloudPlatform/bigquery-record-manager/blob/main/Service.py). 
 
