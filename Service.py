@@ -73,17 +73,24 @@ class Service:
                 
                 if tag.template == 'projects/{0}/locations/{1}/tagTemplates/{2}'.format(self.template_project, self.template_region, self.template_id):
                     
-                    field = tag.fields[self.retention_period_field]
-                    if field.double_value:
-                        retention_period_value = field.double_value
+                    if self.retention_period_field in tag.fields:
+                        field = tag.fields[self.retention_period_field]
+                        if field.double_value:
+                            retention_period_value = field.double_value
+                        else:
+                            retention_period_value = None
+                            
+                    if self.expiration_action_field in tag.fields:
+                        field = tag.fields[self.expiration_action_field]
+                        if field.enum_value:
+                            expiration_action_value = field.enum_value.display_name
+                        else:
+                            expiration_action_value = None
                     
-                    field = tag.fields[self.expiration_action_field]
-                    if field.enum_value:
-                        expiration_action_value = field.enum_value.display_name
-                    
-                    record = {"project": project, "dataset": dataset, "table": table, "year": year, "month": month, "day": day, \
-                              "retention_period": retention_period_value, "expiration_action": expiration_action_value}
-                    retention_records.append(record)
+                    if retention_period_value and expiration_action_value:
+                        record = {"project": project, "dataset": dataset, "table": table, "year": year, "month": month, "day": day, \
+                                  "retention_period": retention_period_value, "expiration_action": expiration_action_value}
+                        retention_records.append(record)
                     break
         
         return retention_records                      
@@ -438,7 +445,7 @@ if __name__ == '__main__':
         print('python Service.py [PARAM_FILE]')
         sys.exit()
     
-    param_file = sys.argv[1].strip()
+    param_file = sys.argv[1].strip()    
     print('Info: param_file:', param_file)
    
     if not param_file:
