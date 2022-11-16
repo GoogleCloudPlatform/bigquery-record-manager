@@ -29,7 +29,7 @@ class Service:
         request = datacatalog.SearchCatalogRequest()
         request.scope = scope
     
-        query = 'tag:' + self.template_project + '.' + self.template_id
+        query = 'tag:' + self.template_project + '.' + self.template_id + '.' + self.retention_period_field
         print('Info: using query: ' + query)
         self.logger.log_text('Info: using query: ' + query, severity='INFO')
         request.query = query
@@ -110,32 +110,33 @@ class Service:
             create_date = datetime.datetime(record['year'], record['month'], record['day'])
             expiration = create_date + datetime.timedelta(days=snapshot_expiration)
             
-            ddl = ('create snapshot table ' + snapshot_table
-                    + ' clone ' + record['project'] + '.' + record['dataset'] + '.' + record['table'] 
-                    + ' options ('
-                    + ' expiration_timestamp = timestamp "' + expiration.strftime("%Y-%m-%d") + '");') 
+            if expiration == date.today():
+                ddl = ('create snapshot table ' + snapshot_table
+                        + ' clone ' + record['project'] + '.' + record['dataset'] + '.' + record['table'] 
+                        + ' options ('
+                        + ' expiration_timestamp = timestamp "' + expiration.strftime("%Y-%m-%d") + '");') 
             
-            print('Info: create snapshot table', snapshot_table, 'using DDL:', ddl)
-            self.logger.log_text('Info: create snapshot table ' + snapshot_table + ' using DDL: ' + ddl, severity='INFO')
+                print('Info: create snapshot table', snapshot_table, 'using DDL:', ddl)
+                self.logger.log_text('Info: create snapshot table ' + snapshot_table + ' using DDL: ' + ddl, severity='INFO')
             
             
-            try:
+                try:
 
-                if self.mode == 'apply':
+                    if self.mode == 'apply':
                     
-                    self.bq_client.delete_table(snapshot_table, not_found_ok=True) 
+                        self.bq_client.delete_table(snapshot_table, not_found_ok=True) 
                     
-                    print('Info: deleted snapshot table', snapshot_table)
-                    self.logger.log_text('Info: deleted snapshot table ' + snapshot_table, severity='INFO')
+                        print('Info: deleted snapshot table', snapshot_table)
+                        self.logger.log_text('Info: deleted snapshot table ' + snapshot_table, severity='INFO')
                     
-                    self.bq_client.query(ddl).result()
+                        self.bq_client.query(ddl).result()
                 
-                    print('Info: created snapshot table', snapshot_table)
-                    self.logger.log_text('Info: created snapshot table ' + snapshot_table, severity='INFO')
+                        print('Info: created snapshot table', snapshot_table)
+                        self.logger.log_text('Info: created snapshot table ' + snapshot_table, severity='INFO')
                     
-            except Exception as e:
-                print('Error occurred in creating_snapshots. Error message:', e)
-                self.logger.log_text('Error occurred in creating_snapshots. Error message: ' + str(e), severity='ERROR')  
+                except Exception as e:
+                    print('Error occurred in create_snapshots. Error message:', e)
+                    self.logger.log_text('Error occurred in create_snapshots. Error message: ' + str(e), severity='ERROR')  
 
 
     def expire_tables(self, retention_records):
@@ -196,6 +197,7 @@ class Service:
                      self.copy_tags(record['project'], record['dataset'], record['table'], self.archives_project, self.archives_dataset,\
                                     external_table)
                      
+                     # uncomment the line below to delete archived table
                      #self.bq_client.delete_table(table_id, not_found_ok=True)
                      
                      print('Info: table', table_id, 'has been archived.')
@@ -223,10 +225,8 @@ class Service:
             
             if self.mode == 'apply':
                 job = self.bq_client.extract_table(source=table_ref, destination_uris=file_path, job_config=config)
-        
-                while job.running():
-                    time.sleep(2)
-            
+                result = job.result()
+
                 print('Info: created external file: ' + file_path)
                 self.logger.log_text('Info: created external file: ' + file_path, severity='INFO')
                 
@@ -445,7 +445,7 @@ if __name__ == '__main__':
         print('python Service.py [PARAM_FILE]')
         sys.exit()
     
-    param_file = sys.argv[1].strip()    
+    param_file = sys.argv[1].strip()
     print('Info: param_file:', param_file)
    
     if not param_file:
