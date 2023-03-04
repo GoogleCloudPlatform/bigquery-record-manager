@@ -28,8 +28,23 @@ class Service:
         
         request = datacatalog.SearchCatalogRequest()
         request.scope = scope
-    
+        
         query = 'tag:' + self.template_project + '.' + self.template_id + '.' + self.retention_period_field
+        
+        dataset_index = 0
+        
+        for dataset_in_scope in self.datasets_in_scope:
+            
+            print('Info: dataset_in_scope:', dataset_in_scope)
+            self.logger.log_text('Info: dataset_in_scope: ' + dataset_in_scope, severity='INFO')
+            
+            if dataset_index == 0:
+                query += ' and parent:' + dataset_in_scope
+            else:
+                query += ' or parent:' + dataset_in_scope
+                
+            dataset_index += 1
+        
         print('Info: using query: ' + query)
         self.logger.log_text('Info: using query: ' + query, severity='INFO')
         request.query = query
@@ -75,11 +90,8 @@ class Service:
                     
                     if self.retention_period_field in tag.fields:
                         field = tag.fields[self.retention_period_field]
-                        if field.double_value:
-                            retention_period_value = field.double_value
-                        else:
-                            retention_period_value = None
-                            
+                        retention_period_value = field.double_value
+     
                     if self.expiration_action_field in tag.fields:
                         field = tag.fields[self.expiration_action_field]
                         if field.enum_value:
@@ -87,7 +99,7 @@ class Service:
                         else:
                             expiration_action_value = None
                     
-                    if retention_period_value and expiration_action_value:
+                    if retention_period_value >= -1 and expiration_action_value:
                         record = {"project": project, "dataset": dataset, "table": table, "year": year, "month": month, "day": day, \
                                   "retention_period": retention_period_value, "expiration_action": expiration_action_value}
                         retention_records.append(record)
@@ -105,16 +117,23 @@ class Service:
         
             snapshot_name = record['dataset'] + '_' + record['table']
             snapshot_table = self.snapshot_project + '.' + self.snapshot_dataset + '.' + snapshot_name
-            snapshot_expiration = record['retention_period'] + self.snapshot_retention_period
+            snapshot_expiration = record['retention_period'] + self.snapshot_retention_period + 1
             
             create_date = datetime.datetime(record['year'], record['month'], record['day'])
-            expiration = create_date + datetime.timedelta(days=snapshot_expiration)
+            snapshot_expiration = create_date + datetime.timedelta(days=snapshot_expiration)
             
-            if expiration == date.today():
+            if record['retention_period'] == -1:
+                retention_period = 0
+            else:
+                retention_period = record['retention_period']
+                
+            table_expiration = create_date + datetime.timedelta(days=retention_period)
+
+            if table_expiration.date() == datetime.date.today():
                 ddl = ('create snapshot table ' + snapshot_table
                         + ' clone ' + record['project'] + '.' + record['dataset'] + '.' + record['table'] 
                         + ' options ('
-                        + ' expiration_timestamp = timestamp "' + expiration.strftime("%Y-%m-%d") + '");') 
+                        + ' expiration_timestamp = timestamp "' + snapshot_expiration.strftime("%Y-%m-%d") + '");') 
             
                 print('Info: create snapshot table', snapshot_table, 'using DDL:', ddl)
                 self.logger.log_text('Info: create snapshot table ' + snapshot_table + ' using DDL: ' + ddl, severity='INFO')
@@ -197,8 +216,9 @@ class Service:
                      self.copy_tags(record['project'], record['dataset'], record['table'], self.archives_project, self.archives_dataset,\
                                     external_table)
                      
-                     # uncomment the line below to delete archived table
-                     #self.bq_client.delete_table(table_id, not_found_ok=True)
+                     # delete the archived table
+                     if self.mode == 'apply':
+                         self.bq_client.delete_table(table_id, not_found_ok=True)
                      
                      print('Info: table', table_id, 'has been archived.')
                      self.logger.log_text('Info: table ' + table_id + ' has been archived.', severity='INFO')
@@ -347,6 +367,13 @@ class Service:
             sys.exit()
         else:   
             self.projects_in_scope = json_input['projects_in_scope']
+            
+        if 'datasets_in_scope' in json_input:
+            self.datasets_in_scope = json_input['datasets_in_scope']
+            print('Info: datasets_in_scope set to:', self.datasets_in_scope) 
+        else:   
+            self.datasets_in_scope = []
+            print('Info: datasets_in_scope is empty.')    
 
         if 'bigquery_region' not in json_input:
             print('Missing bigquery_region parameter.')
@@ -446,6 +473,7 @@ if __name__ == '__main__':
         sys.exit()
     
     param_file = sys.argv[1].strip()
+    # param_file = 'gs://cdmc-record-manager/param.json' bug in Cloud Run necessitates hardcoding the param file path
     print('Info: param_file:', param_file)
    
     if not param_file:

@@ -5,6 +5,7 @@
 	"retention_period_field": "retention_period",
 	"expiration_action_field": "expiration_action",
 	"projects_in_scope": ["tag-engine-develop", "data-mesh-343422"],
+	"datasets_in_scope": ["crm", "oltp", "hr"],
 	"bigquery_region": "us-central1",
 	"snapshot_project": "tag-engine-develop",
 	"snapshot_dataset": "snapshots",
