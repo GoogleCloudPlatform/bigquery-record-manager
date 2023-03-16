@@ -216,12 +216,15 @@ class Service:
                      self.copy_tags(record['project'], record['dataset'], record['table'], self.archives_project, self.archives_dataset,\
                                     external_table)
                      
+                     print('Info: archive', table_id)
+                     self.logger.log_text('Info: archive ' + table_id, severity='INFO')
+                     
                      # delete the archived table
                      if self.mode == 'apply':
                          self.bq_client.delete_table(table_id, not_found_ok=True)
                      
-                     print('Info: table', table_id, 'has been archived.')
-                     self.logger.log_text('Info: table ' + table_id + ' has been archived.', severity='INFO')
+                         print('Info: table', table_id, 'has been archived.')
+                         self.logger.log_text('Info: table ' + table_id + ' has been archived.', severity='INFO')
                  
                  except Exception as e:
                      print('Error occurred while archiving table ', table_id, '. Error message:', e)
@@ -266,20 +269,20 @@ class Service:
               + 'format = "' + self.export_format + '", '
               + 'uris = ["' + export_file + '"]);')
         
-        print('Info: create the Biglake table using DDL:', ddl)
-        self.logger.log_text('Info: create the Biglake table using DDL: ' + ddl, severity='INFO')
+        print('Info: create biglake table using DDL:', ddl)
+        self.logger.log_text('Info: create biglake table using DDL: ' + ddl, severity='INFO')
          
         try:
             
             if self.mode == 'apply':
                 self.bq_client.query(ddl).result() 
                 
-                print('Info: created the Biglake table', external_table)
-                self.logger.log_text('Info: created the Biglake table ' + external_table)
+                print('Info: created biglake table', external_table)
+                self.logger.log_text('Info: created biglake table ' + external_table)
             
         except Exception as e: 
             print('Error occurred during create biglake table: ', e)
-            self.logger.log_text('Error occurred while creating thearchives_ biglake table: ' + str(e), severity='ERROR')
+            self.logger.log_text('Error occurred during create biglake table: ' + str(e), severity='ERROR')
 
 
     
@@ -468,12 +471,12 @@ class Service:
 if __name__ == '__main__':
         
     # python Service.py [PARAM_FILE]
-    if len(sys.argv) != 2:
-        print('python Service.py [PARAM_FILE]')
-        sys.exit()
+    #if len(sys.argv) != 2:
+        #print('python Service.py [PARAM_FILE]')
+        #sys.exit()
+    # param_file = sys.argv[1].strip()
     
-    param_file = sys.argv[1].strip()
-    # param_file = 'gs://cdmc-record-manager/param.json' bug in Cloud Run necessitates hardcoding the param file path
+    param_file = 'gs://record-manager-param/param.json' # hardcoding file path until Cloud Run Jobs bug gets fixed
     print('Info: param_file:', param_file)
    
     if not param_file:

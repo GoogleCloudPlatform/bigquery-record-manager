@@ -9,11 +9,11 @@ You run Record Manager in either `validate` or `apply` mode. The `validate` mode
 
 #### Dependencies 
 
-Record Manager uses Tag Engine to propagate the metadata tags and policy tags to Biglake tables. You can deploy Tag Engine by following [its deployment procedure](https://github.com/GoogleCloudPlatform/datacatalog-tag-engine/blob/main/README.md). 
+Record Manager uses [Tag Engine]((https://github.com/GoogleCloudPlatform/datacatalog-tag-engine/) to propagate the metadata tags and policy tags to Biglake tables. You can deploy Tag Engine by following [this deployment procedure](https://github.com/GoogleCloudPlatform/datacatalog-tag-engine/blob/main/README.md). 
 
-Note: You can also use Tag Engine to populate the data retention tags that are needed by Record Manager. The data retention tags are created using [this tag template](https://github.com/GoogleCloudPlatform/datacatalog-templates/blob/master/data_retention.yaml).  
+Note: You can also use Tag Engine to populate the data retention tags which are needed by Record Manager. The data retention tags are created using [this tag template](https://github.com/GoogleCloudPlatform/datacatalog-templates/blob/master/data_retention.yaml).  
 
-Tag Engine can be deployed into the same project as Record Manager or into a different project. For proof-of-concepts, it is often simpler to deploy them together into the same project. 
+Tag Engine can be deployed into the same project as Record Manager or into its own project. For proof-of-concepts, it is often simpler to deploy them together into the same project. 
 
 
 #### Step 0: update Google Cloud SDK
