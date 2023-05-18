@@ -1,11 +1,11 @@
 import sys, json
 import datetime, time
 import requests
+import os
 from google.cloud import storage
 from google.cloud import datacatalog
 from google.cloud.datacatalog_v1 import types
 from google.cloud import bigquery
-from google.cloud import logging
 from google.cloud.exceptions import NotFound
 
 class Service:
@@ -21,8 +21,7 @@ class Service:
         scope = datacatalog.SearchCatalogRequest.Scope()
          
         for project in self.projects_in_scope:
-            print('Info: project', project, 'is in scope')
-            self.logger.log_text('Info: project ' + project + ' is in scope', severity='INFO')
+            print('Info: project ' + project + ' is in scope')
             
             scope.include_project_ids.append(project)
         
@@ -34,9 +33,7 @@ class Service:
         dataset_index = 0
         
         for dataset_in_scope in self.datasets_in_scope:
-            
-            print('Info: dataset_in_scope:', dataset_in_scope)
-            self.logger.log_text('Info: dataset_in_scope: ' + dataset_in_scope, severity='INFO')
+            print('Info: dataset_in_scope: ' + dataset_in_scope)
             
             if dataset_index == 0:
                 query += ' and parent:' + dataset_in_scope
@@ -46,7 +43,6 @@ class Service:
             dataset_index += 1
         
         print('Info: using query: ' + query)
-        self.logger.log_text('Info: using query: ' + query, severity='INFO')
         request.query = query
         request.page_size = 1
     
@@ -62,8 +58,7 @@ class Service:
             dataset = fqt.split('.')[1]
             table = fqt.split('.')[2]
             
-            print('Info: found tagged table:', table) 
-            self.logger.log_text('Info: found tagged table: ' + table, severity='INFO')
+            print('Info: found tagged table: ' + table)
             #print('result.linked_resource:', result.linked_resource)
                 
             request = datacatalog.LookupEntryRequest()
@@ -129,33 +124,39 @@ class Service:
                 
             table_expiration = create_date + datetime.timedelta(days=retention_period)
 
-            if table_expiration.date() == datetime.date.today():
+            if table_expiration.date() <= datetime.date.today() and snapshot_expiration.date() > datetime.date.today():
+                
                 ddl = ('create snapshot table ' + snapshot_table
                         + ' clone ' + record['project'] + '.' + record['dataset'] + '.' + record['table'] 
                         + ' options ('
                         + ' expiration_timestamp = timestamp "' + snapshot_expiration.strftime("%Y-%m-%d") + '");') 
-            
-                print('Info: create snapshot table', snapshot_table, 'using DDL:', ddl)
-                self.logger.log_text('Info: create snapshot table ' + snapshot_table + ' using DDL: ' + ddl, severity='INFO')
-            
-            
+
                 try:
 
                     if self.mode == 'apply':
                     
-                        self.bq_client.delete_table(snapshot_table, not_found_ok=True) 
+                        
+                        try:
+                            self.bq_client.get_table(snapshot_table)  
+                            self.bq_client.delete_table(snapshot_table)
+                            print('Info: deleted snapshot table ' + snapshot_table) 
+                            
+                        except NotFound:
+                            print("Snapshot table {} not found, skipping delete.".format(snapshot_table))
+                        
+                        print('Info: using ddl to create snapshot table: ' + ddl)    
+                        query_job = self.bq_client.query(ddl).result()
+                        print('Info: created snapshot table ' + snapshot_table)
                     
-                        print('Info: deleted snapshot table', snapshot_table)
-                        self.logger.log_text('Info: deleted snapshot table ' + snapshot_table, severity='INFO')
-                    
-                        self.bq_client.query(ddl).result()
-                
-                        print('Info: created snapshot table', snapshot_table)
-                        self.logger.log_text('Info: created snapshot table ' + snapshot_table, severity='INFO')
+                    else:
+                        # validate mode
+                        print('Info: create snapshot table ' + snapshot_table)
                     
                 except Exception as e:
-                    print('Error occurred in create_snapshots. Error message:', e)
-                    self.logger.log_text('Error occurred in create_snapshots. Error message: ' + str(e), severity='ERROR')  
+                    print('Error occurred in create_snapshots. Error message: ' + str(e)) 
+            
+            else:
+                print('skipping snapshot table creation for table ', record['table']) 
 
 
     def expire_tables(self, retention_records):
@@ -170,23 +171,26 @@ class Service:
             table = self.bq_client.get_table(table_ref)
         
             create_date = datetime.datetime(record['year'], record['month'], record['day'])
-            expiration = create_date + datetime.timedelta(days=record['retention_period']+1)
-            
-            print('Info: expiration on', table_id, 'should be set to', expiration.strftime("%Y-%m-%d"))
-            self.logger.log_text('Info: expiration on ' + table_id + ' should be set to ' + expiration.strftime("%Y-%m-%d"))
+            table_expiration = create_date + datetime.timedelta(days=record['retention_period']+1)
             
             try:
                                 
                 if self.mode == 'apply':
-                    table.expires = expiration
-                    table = self.bq_client.update_table(table, ["expires"])
-                
-                    print('Info: set expiration on table', table_id) 
-                    self.logger.log_text('Info: set expiration on table ' + table_id, severity='INFO')
+
+                    if table_expiration.date() > datetime.date.today():
+                        table.expires = table_expiration
+                        table = self.bq_client.update_table(table, ["expires"])
+                        print('Info: set expiration on ' + table_id + ' to ' + table_expiration.strftime("%Y-%m-%d"))
+                    else:
+                        self.bq_client.delete_table(table_id, not_found_ok=True)  
+                        print("Info: deleted table '{}'.".format(table_id))
+                else:
+                    # validate mode
+                    print('Info: purge or expire table ' + table_id + ' on ' + table_expiration.strftime("%Y-%m-%d"))
+                    
             
             except Exception as e:
-                print('Error occurred when setting expiration on table', table_id, '. Error message:', e)
-                self.logger.log_text('Error occurred when setting expiration on table ' + table_id + '. Error message:' + e, severity='ERROR')  
+                print('Error occurred while either setting expiration or purging table ' + table_id + '. Error message:' + str(e))  
     
     
     def archive_tables(self, retention_records):
@@ -216,19 +220,15 @@ class Service:
                      self.copy_tags(record['project'], record['dataset'], record['table'], self.archives_project, self.archives_dataset,\
                                     external_table)
                      
-                     print('Info: archive', table_id)
-                     self.logger.log_text('Info: archive ' + table_id, severity='INFO')
+                     print('Info: archive ' + table_id)
                      
                      # delete the archived table
                      if self.mode == 'apply':
                          self.bq_client.delete_table(table_id, not_found_ok=True)
-                     
-                         print('Info: table', table_id, 'has been archived.')
-                         self.logger.log_text('Info: table ' + table_id + ' has been archived.', severity='INFO')
+                         print('Info: table ' + table_id + ' has been archived.')
                  
                  except Exception as e:
-                     print('Error occurred while archiving table ', table_id, '. Error message:', e)
-                     self.logger.log_text('Error occurred while archiving table ' + table_id + '. Error message: ' + str(e), severity='ERROR')
+                     print('Error occurred while archiving table ' + table_id + '. Error message: ' + str(e))
     
     
     def export_table(self, project, dataset, table, table_id):
@@ -240,22 +240,17 @@ class Service:
         table_ref = bigquery.Table.from_string(table_id)
         
         file_path = 'gs://' + self.archives_bucket + '/' + project + '/' + dataset + '/' + table + '.' + self.export_format
-        
-        print('Info: export', table_id, 'to', file_path)
-        self.logger.log_text('Info: export ' + table_id + ' to ' + file_path)
+        print('Info: export ' + table_id + ' to ' + file_path)
 
         try:
             
             if self.mode == 'apply':
                 job = self.bq_client.extract_table(source=table_ref, destination_uris=file_path, job_config=config)
                 result = job.result()
-
                 print('Info: created external file: ' + file_path)
-                self.logger.log_text('Info: created external file: ' + file_path, severity='INFO')
                 
         except Exception as e:
-            print('Error occurred while exporting the table: ', e)
-            self.logger.log_text('Error occurred while exporting the table: ' + str(e), severity='ERROR')
+            print('Error occurred while exporting the table: ' + str(e))
             success = False
             
         return success, file_path
@@ -269,55 +264,41 @@ class Service:
               + 'format = "' + self.export_format + '", '
               + 'uris = ["' + export_file + '"]);')
         
-        print('Info: create biglake table using DDL:', ddl)
-        self.logger.log_text('Info: create biglake table using DDL: ' + ddl, severity='INFO')
+        print('Info: create biglake table using DDL: ' + ddl)
          
         try:
             
             if self.mode == 'apply':
                 self.bq_client.query(ddl).result() 
-                
-                print('Info: created biglake table', external_table)
-                self.logger.log_text('Info: created biglake table ' + external_table)
+                print('Info: created biglake table ' + external_table)
             
         except Exception as e: 
-            print('Error occurred during create biglake table: ', e)
-            self.logger.log_text('Error occurred during create biglake table: ' + str(e), severity='ERROR')
+            print('Error occurred during create biglake table: ' + str(e))
 
 
-    
     def copy_tags(self, source_project, source_dataset, source_table, target_project, target_dataset, target_table):
         
         url = self.tag_engine_endpoint + '/copy_tags'
         payload = json.dumps({'source_project': source_project, 'source_dataset': source_dataset, 'source_table': source_table, 
                               'target_project': target_project, 'target_dataset': target_dataset, 'target_table': target_table})
 
-        print('Info: copy tags using params:', payload)
-        self.logger.log_text('Info: copy tags using params: ' + str(payload), severity='INFO')
+        print('Info: copy tags using params: ' + str(payload))
         
         try:
             
             if self.mode == 'apply':
                 res = requests.post(url, data=payload).json()
-                
-                print('Info: copy tags response:', res)
-                self.logger.log_text('Info: copy tags response: ' + str(res), severity='INFO')
+                print('Info: copy tags response: ' + str(res))
         
         except Exception as e: 
-            print('Error occurred during copy_tags: ', e)
-            self.logger.log_text('Error occurred during copy_tags ' + str(e), severity='ERROR')    
+            print('Error occurred during copy_tags ' + str(e))    
         
 
     def get_param_file(self, file_path):
     
-        print('file_path: ', file_path)
         file_path = file_path.replace('gs://', '')
         bucket = file_path.split('/')[0]
         file_name = file_path.replace(bucket + '/', '')
-        
-        print('bucket:', bucket)
-        print('file_name:', file_name)
-    
         storage_client = storage.Client()
         bucket = storage_client.get_bucket(bucket)
         blob = bucket.get_blob(file_name)
@@ -447,14 +428,11 @@ class Service:
                 sys.exit()
             self.mode = json_input['mode']
 
-        # create clients
-        log_client = logging.Client()
-        self.logger = log_client.logger('Record_Manager_Service')        
+        # create clients     
         self.dc_client = datacatalog.DataCatalogClient()
         self.bq_client = bigquery.Client(location=self.bigquery_region)
         
         print('Info: running in', self.mode, 'mode.')
-        self.logger.log_text('Info: running in ' + self.mode + ' mode', severity='INFO')
         
         # search catalog
         retention_records = s.search_catalog()
@@ -470,19 +448,13 @@ class Service:
 
 if __name__ == '__main__':
         
-    # python Service.py [PARAM_FILE]
-    #if len(sys.argv) != 2:
-        #print('python Service.py [PARAM_FILE]')
-        #sys.exit()
-    # param_file = sys.argv[1].strip()
-    
-    param_file = 'gs://record-manager-param/param.json' # hardcoding file path until Cloud Run Jobs bug gets fixed
-    print('Info: param_file:', param_file)
-   
-    if not param_file:
-        print('Missing param file for running job. Needs to be equal a GCS path starting with gs://')
+    if os.environ.get('PARAM_FILE') is None:
+        print('Error: PARAM_FILE environment variable is required for running Record Manager. Needs to be equal to a GCS path starting with gs://')
         sys.exit()
-
+    else:
+        param_file = os.environ.get('PARAM_FILE')
+        print('Info: param_file:', param_file)
+   
     s = Service()
     s.run_service(param_file)
      

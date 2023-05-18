@@ -9,7 +9,7 @@
 	"bigquery_region": "us-central1",
 	"snapshot_project": "tag-engine-develop",
 	"snapshot_dataset": "snapshots",
-	"snapshot_retention_period": 30,
+	"snapshot_retention_period": 60,
 	"archives_bucket": "archived_assets",
 	"export_format": "parquet",
 	"archives_project": "tag-engine-develop",
