@@ -32,7 +32,7 @@ gcloud config set core/project $PROJECT_ID
 #### Step 2: Create service account and grant it required roles
 
 ```
-export RECORD_MANAGER_SA=record-manager-sa@$PROJECT_ID.iam.gserviceaccount.com
+export RECORD_MANAGER_SA=record-manager-sa@${PROJECT_ID}.iam.gserviceaccount.com
 
 gcloud iam roles create StorageBucketReader \
 	--project $PROJECT_ID \
