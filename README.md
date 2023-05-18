@@ -130,8 +130,8 @@ As mentioned previously, you run Record Manager in either `validate` or `apply` 
 ```
 gcloud run jobs create record-manager-job \
 	--image gcr.io/$PROJECT_ID/record-manager \
-    --tasks=1 \
-    --parallelism=1 \
+        --tasks=1 \
+        --parallelism=1 \
 	--set-env-vars PARAM_FILE="gs://record-manager-param/param.json" \
 	--service-account=$RECORD_MANAGER_SA
 ```
