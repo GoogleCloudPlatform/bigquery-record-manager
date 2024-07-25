@@ -32,6 +32,8 @@ gcloud config set core/project $PROJECT_ID
 #### Step 2: Create service account and grant it required roles
 
 ```
+gcloud iam service-accounts create record-manager-sa --project=$PROJECT_ID
+
 export RECORD_MANAGER_SA=record-manager-sa@${PROJECT_ID}.iam.gserviceaccount.com
 
 gcloud iam roles create StorageBucketReader \
@@ -121,9 +123,17 @@ In addition, you may also want to adjust `snapshot_retention_period` which is gi
 
 The param file is available [here](https://github.com/GoogleCloudPlatform/bigquery-record-manager/blob/main/param.json). 
 
-Once you have created the file, upload it to your GCS bucket. Copy the full path to this file, as you will need it in the next step. 
+Create a bucket using:
+
+```bash
+gcloud storage buckets create gs://<your_bucket_name>
+```
+
+Once you have created the file, upload it to your GCS bucket using `gsutil cp param.json gs://<your_bucket_name>`. Copy the full path to this file, as you will need it in the next step.
 
 As mentioned previously, you run Record Manager in either `validate` or `apply` mode. 
+
+When querying data on separate projects, make sure that the service account has the necessary permissions to access their metadata on the scoped and template projects. For private tags, the service account will need view permissions on both the tag template and the data entry to search for the tag, this can be done by assigning `roles/bigquery.dataViewer` and `roles/datacatalog.viewer` to the service account.
 
 #### Step 7: Create the Cloud Run job
 
@@ -148,3 +158,4 @@ gcloud run jobs execute record-manager-job --wait
 
 * Go to the Cloud Run console and click on your job to view the logs. 
 * If you encounter the error `ERROR: (gcloud.beta.run.jobs.create) User X does not have permission to access namespaces instance Y (or it may not exist): Permission 'iam.serviceaccounts.actAs' denied on service account Z (or it may not exist)` when creating the Cloud Run job, please consult [this page](https://cloud.google.com/iam/docs/service-accounts-actas).
+* If your Cloud Run Job logs a message like `Info: found retention records in the catalog: []` and you were expecting the query to return records: This can happen due to missing permissions, to resolve this issue, ensure that the service account has `roles/bigquery.dataViewer` and `roles/datacatalog.viewer` on the data and tag templates being queried (this may be on a different project than the one that is running the Job).
